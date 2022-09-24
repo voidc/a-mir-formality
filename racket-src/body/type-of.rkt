@@ -8,6 +8,7 @@
          type-of/Rvalue
          type-of/Operands
          type-of/Operand
+         mutability/Place
          field-tys
          )
 
@@ -20,7 +21,7 @@
   #:mode (type-of/Place I I O)
   #:contract (type-of/Place Γ Place Ty)
 
-  [(place-type-of Γ Place Ty ())
+  [(place-type-of Γ Place Ty _ ())
    ----------------------------------------
    (type-of/Place Γ Place Ty)
    ]
@@ -29,45 +30,46 @@
 
 (define-judgment-form
   formality-body
-  #:mode (place-type-of I I O O)
-  #:contract (place-type-of Γ Place Ty MaybeVariantId)
+  #:mode (place-type-of I I O O O)
+  #:contract (place-type-of Γ Place Ty MaybeMut MaybeVariantId)
 
   [(type-of/LocalId Γ LocalId Ty)
+   (mutability/LocalId Γ LocalId MaybeMut)
    ----------------------------------
-   (place-type-of Γ LocalId Ty ())
+   (place-type-of Γ LocalId Ty MaybeMut ())
    ]
 
-  [(place-type-of Γ Place (rigid-ty (ref _) (_ Ty)) ())
+  [(place-type-of Γ Place (rigid-ty (ref MaybeMut) (_ Ty)) _ ())
    ----------------------------------
-   (place-type-of Γ (* Place) Ty ())
+   (place-type-of Γ (* Place) Ty MaybeMut ())
    ]
 
   [; field of a struct
    ;
    ; extract the name of the singular variant
-   (place-type-of Γ Place (rigid-ty AdtId Parameters) ())
+   (place-type-of Γ Place (rigid-ty AdtId Parameters) MaybeMut ())
    (where (struct AdtId _ where _ ((VariantId _))) (find-adt Γ AdtId))
    (field-tys Γ AdtId Parameters VariantId (_ ... (FieldId Ty_field) _ ...))
    ----------------------------------
-   (place-type-of Γ (field Place FieldId) Ty_field ())
+   (place-type-of Γ (field Place FieldId) Ty_field MaybeMut ())
    ]
 
   [; field of an enum
    ;
    ; must have been downcast to a particular variant
-   (place-type-of Γ Place (rigid-ty AdtId Parameters) (VariantId))
+   (place-type-of Γ Place (rigid-ty AdtId Parameters) MaybeMut (VariantId))
    (where (enum AdtId _ _ where _) (find-adt Γ AdtId))
    (field-tys Γ AdtId Parameters VariantId (_ ... (FieldId Ty_field) _ ...))
    ----------------------------------
-   (place-type-of Γ (field Place FieldId) Ty_field ())
+   (place-type-of Γ (field Place FieldId) Ty_field MaybeMut ())
 
    ]
 
   [; downcast to an enum variant
-   (place-type-of Γ Place (rigid-ty AdtId Parameters) ())
+   (place-type-of Γ Place (rigid-ty AdtId Parameters) MaybeMut ())
    (where (enum AdtId _ where _ (_ ... (VariantId _) _ ...)) (find-adt Γ AdtId))
    ----------------------------------
-   (place-type-of Γ (downcast Place VariantId) (rigid-ty AdtId Parameters) (VariantId))
+   (place-type-of Γ (downcast Place VariantId) (rigid-ty AdtId Parameters) MaybeMut (VariantId))
    ]
 
   ; FIXME: indexing, unions
@@ -258,6 +260,31 @@
    ------------------------------------------
    (type-of/Rvalue Γ (cast _ as Ty) Ty)
    ]
+  )
+
+(define-judgment-form
+  formality-body
+  #:mode (mutability/LocalId I I O)
+  #:contract (mutability/LocalId Γ LocalId MaybeMut)
+
+  [(where/error LocalDecls (local-decls-of-Γ Γ))
+   (where (_ ... (LocalId _ MaybeMut) _ ...) LocalDecls)
+   ----------------------------------------
+   (mutability/LocalId Γ LocalId MaybeMut)
+   ]
+
+  )
+
+(define-judgment-form
+  formality-body
+  #:mode (mutability/Place I I O)
+  #:contract (mutability/Place Γ Place MaybeMut)
+
+  [(place-type-of Γ Place _ MaybeMut ())
+   ----------------------------------------
+   (mutability/Place Γ Place MaybeMut)
+   ]
+
   )
 
 (define-metafunction formality-body

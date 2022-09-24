@@ -73,7 +73,7 @@
 
   [(type-of/Place Γ Place Ty_place)
    (type-of/Rvalue Γ Rvalue Ty_rvalue)
-   #;(mutability/Place Γ Place mut)
+   (mutability/Place Γ Place mut)
    (type-check-goal/Rvalue Γ Rvalue Goal_rvalue)
    ----------------------------------------
    (type-check-goal/Statement Γ
@@ -81,32 +81,19 @@
                               (&& (Goal_rvalue (Ty_rvalue <= Ty_place))))
    ]
 
+  [(mutability/Place Γ Place mut)
+   ----------------------------------------
+   (type-check-goal/Statement Γ (set-discriminant Place _) true-goal)]
+
+  [----------------------------------------
+   (type-check-goal/Statement Γ _ true-goal)]
+
   )
 
 (define-judgment-form
   formality-body
   #:mode (type-check-goal/Terminator I I O)
   #:contract (type-check-goal/Terminator Γ Terminator Goal)
-
-  [----------------------------------------
-   (type-check-goal/Terminator Γ (goto BasicBlockId) true-goal)
-   ]
-
-  [----------------------------------------
-   (type-check-goal/Terminator Γ resume true-goal)
-   ]
-
-  [----------------------------------------
-   (type-check-goal/Terminator Γ abort true-goal)
-   ]
-
-  [----------------------------------------
-   (type-check-goal/Terminator Γ return true-goal)
-   ]
-
-  [----------------------------------------
-   (type-check-goal/Terminator Γ unreachable true-goal)
-   ]
 
   [(type-of/Operand Γ Operand_fn Ty_fn)
    (type-of/Operand Γ Operand_arg Ty_arg) ...
@@ -118,6 +105,10 @@
                                     ))))
    ----------------------------------------
    (type-check-goal/Terminator Γ (call Operand_fn (Operand_arg ...) Place_dest TargetIds) Goal)
+   ]
+
+  [----------------------------------------
+   (type-check-goal/Terminator Γ _ true-goal)
    ]
 
   )

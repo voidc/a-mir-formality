@@ -104,11 +104,6 @@
 
   ;; Internal to type check:
   ;;
-  ;; Extension of `Ty` to optionally store a `VariantId`.
-  (PlaceTy ::= (place-ty Ty MaybeMut) (place-ty-variant Ty MaybeMut VariantId))
-
-  ;; Internal to type check:
-  ;;
   ;; Typing context storing bindings from locals to types and `CrateDecls`.
   (Γ ::= (CrateDecls VarIds_∀ (Tys -> Ty where Biformulas) VarIds_∃ LocalsAndBlocks))
 
